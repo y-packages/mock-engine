@@ -9,6 +9,7 @@ use YakNet\MockEngine\Exception\QueryException;
 
 class QueryBuilder
 {
+    protected const NO_VALUE = '___no_value___';
     /** @var array<array-key, string|array<string, string>> */
     protected array $selects = [];
 
@@ -68,7 +69,7 @@ class QueryBuilder
     public function where(
         string|Closure $column,
         mixed $operator = null,
-        mixed $value = null,
+        mixed $value = self::NO_VALUE,
         string $boolean = 'AND'
     ): self {
         if ($column instanceof Closure) {
@@ -80,7 +81,7 @@ class QueryBuilder
             return $this;
         }
 
-        if ($value === null && $operator !== null) {
+        if ($value === self::NO_VALUE) {
             $value = $operator;
             $operator = '=';
         }
@@ -99,9 +100,41 @@ class QueryBuilder
     /**
      * Add an OR WHERE condition.
      */
-    public function orWhere(string|Closure $column, mixed $operator = null, mixed $value = null): self
+    public function orWhere(string|Closure $column, mixed $operator = null, mixed $value = self::NO_VALUE): self
     {
         return $this->where($column, $operator, $value, 'OR');
+    }
+
+    /**
+     * Add a WHERE NULL condition.
+     */
+    public function whereNull(string $column, string $boolean = 'AND'): self
+    {
+        return $this->where($column, '=', null, $boolean);
+    }
+
+    /**
+     * Add a WHERE NOT NULL condition.
+     */
+    public function whereNotNull(string $column, string $boolean = 'AND'): self
+    {
+        return $this->where($column, '!=', null, $boolean);
+    }
+
+    /**
+     * Add an OR WHERE NULL condition.
+     */
+    public function orWhereNull(string $column): self
+    {
+        return $this->whereNull($column, 'OR');
+    }
+
+    /**
+     * Add an OR WHERE NOT NULL condition.
+     */
+    public function orWhereNotNull(string $column): self
+    {
+        return $this->whereNotNull($column, 'OR');
     }
 
     /**

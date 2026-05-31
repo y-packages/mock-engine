@@ -202,4 +202,36 @@ class QueryBuilderTest extends TestCase
         $this->assertEquals(35, $collection->max('age'));
         $this->assertEquals(['Istanbul', 'Ankara', 'Izmir', 'Istanbul'], $collection->pluck('profile.city'));
     }
+
+    public function testNullFilters(): void
+    {
+        $testData = [
+            ['id' => 1, 'name' => 'John', 'age' => 25, 'city' => 'Istanbul'],
+            ['id' => 2, 'name' => 'Charlie', 'age' => null, 'city' => null],
+        ];
+
+        // whereNull
+        $results = (new QueryBuilder($testData))->whereNull('age')->get();
+        $this->assertCount(1, $results);
+        $this->assertEquals('Charlie', $results[0]['name']);
+
+        // whereNotNull
+        $results = (new QueryBuilder($testData))->whereNotNull('age')->get();
+        $this->assertCount(1, $results);
+        $this->assertEquals('John', $results[0]['name']);
+
+        // orWhereNull
+        $results = (new QueryBuilder($testData))
+            ->where('id', '=', 1)
+            ->orWhereNull('city')
+            ->get();
+        $this->assertCount(2, $results);
+
+        // orWhereNotNull
+        $results = (new QueryBuilder($testData))
+            ->where('id', '=', 2)
+            ->orWhereNotNull('city')
+            ->get();
+        $this->assertCount(2, $results);
+    }
 }

@@ -1,0 +1,30 @@
+{
+    "name": "yaknet/mock-engine",
+    "description": "In-memory SQL-like query builder and execution engine for PHP arrays",
+    "license": "MIT",
+    "minimum-stability": "stable",
+    "prefer-stable": true,
+    "authors": [
+        {
+            "name": "YakNet",
+            "email": "info@yakhub.com.tr"
+        }
+    ],
+    "require": {
+        "php": ">=8.1"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^10.0",
+        "phpstan/phpstan": "^2.2"
+    },
+    "autoload": {
+        "psr-4": {
+            "YakNet\\MockEngine\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "YakNet\\MockEngine\\Tests\\": "tests/"
+        }
+    }
+}

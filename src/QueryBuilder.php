@@ -10,7 +10,7 @@ use YakNet\MockEngine\Exception\QueryException;
 class QueryBuilder
 {
     protected const NO_VALUE = '___no_value___';
-    /** @var array<array-key, string|array<string, string>> */
+    /** @var array<array-key, string|array<array-key, string>> */
     protected array $selects = [];
 
     /** @var array<int, array{type: string, column?: string|Closure, operator?: string, value?: mixed, boolean: string, query?: Closure}> */
@@ -89,7 +89,7 @@ class QueryBuilder
         $this->wheres[] = [
             'type' => 'basic',
             'column' => $column,
-            'operator' => (string) ($operator ?? '='),
+            'operator' => is_string($operator) ? $operator : '=',
             'value' => $value,
             'boolean' => strtoupper($boolean),
         ];
@@ -266,7 +266,8 @@ class QueryBuilder
         if ($this->groupBy !== null) {
             $grouped = [];
             foreach ($results as $row) {
-                $groupKey = (string) Helper::getValue($row, $this->groupBy, 'null');
+                $rawKey = Helper::getValue($row, $this->groupBy, 'null');
+                $groupKey = is_scalar($rawKey) ? (string) $rawKey : 'null';
                 $grouped[$groupKey][] = $row;
             }
 
@@ -280,7 +281,9 @@ class QueryBuilder
                 $results[$key] = new Collection($processedGroup);
             }
 
-            return new Collection($results);
+            /** @var Collection<array-key, mixed> $col */
+            $col = new Collection($results);
+            return $col;
         }
 
         // 5. Select & Project Columns
@@ -294,7 +297,9 @@ class QueryBuilder
             $finalResults = array_slice($finalResults, $this->offset ?? 0, $this->limit);
         }
 
-        return new Collection($finalResults);
+        /** @var Collection<array-key, mixed> $col */
+        $col = new Collection($finalResults);
+        return $col;
     }
 
     /**
@@ -315,10 +320,18 @@ class QueryBuilder
     protected function applySelect(mixed $row): array|object
     {
         if (empty($this->selects) || in_array('*', $this->selects, true)) {
-            return $row;
+            if (is_array($row)) {
+                /** @var array<string, mixed> $row */
+                return $row;
+            }
+            if (is_object($row)) {
+                return $row;
+            }
+            return [];
         }
 
         $parsedSelects = $this->parseSelects();
+        /** @var array<string, mixed> $projected */
         $projected = [];
 
         foreach ($parsedSelects as $alias => $column) {
@@ -338,12 +351,16 @@ class QueryBuilder
         $parsed = [];
         foreach ($this->selects as $key => $column) {
             if (is_string($key)) {
-                $parsed[$key] = $column;
+                if (is_string($column)) {
+                    $parsed[$key] = $column;
+                }
             } else {
-                if (preg_match('/^\s*(.+?)\s+as\s+(.+?)\s*$/i', $column, $matches)) {
-                    $parsed[$matches[2]] = $matches[1];
-                } else {
-                    $parsed[$column] = $column;
+                if (is_string($column)) {
+                    if (preg_match('/^\s*(.+?)\s+as\s+(.+?)\s*$/i', $column, $matches)) {
+                        $parsed[$matches[2]] = $matches[1];
+                    } else {
+                        $parsed[$column] = $column;
+                    }
                 }
             }
         }
@@ -373,19 +390,20 @@ class QueryBuilder
             if ($condition['type'] === 'nested') {
                 $subBuilder = new self([]);
                 /** @var Closure(QueryBuilder): void $subQueryClosure */
-                $subQueryClosure = $condition['query'];
+                $subQueryClosure = $condition['query'] ?? fn() => null;
                 $subQueryClosure($subBuilder);
                 $match = $this->evaluateConditions($row, $subBuilder->getWheres());
             } else {
                 /** @var string $col */
-                $col = $condition['column'];
+                $col = isset($condition['column']) && is_string($condition['column']) ? $condition['column'] : '';
                 /** @var string $op */
                 $op = $condition['operator'] ?? '=';
+                $val = $condition['value'] ?? null;
                 $match = Evaluator::evaluate(
                     $row,
                     $col,
                     $op,
-                    $condition['value']
+                    $val
                 );
             }
 

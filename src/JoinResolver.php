@@ -85,16 +85,21 @@ class JoinResolver
     private static function toArray(mixed $row): array
     {
         if (is_array($row)) {
+            /** @var array<string, mixed> $row */
             return $row;
         }
         if (is_object($row)) {
             if (method_exists($row, 'toArray')) {
-                return $row->toArray();
+                $arr = $row->toArray();
+                return is_array($arr) ? $arr : [];
             }
             if ($row instanceof \JsonSerializable) {
-                return (array) $row->jsonSerialize();
+                $arr = $row->jsonSerialize();
+                return is_array($arr) ? $arr : [];
             }
-            return (array) $row;
+            /** @var array<string, mixed> $arr */
+            $arr = (array) $row;
+            return $arr;
         }
         return [];
     }

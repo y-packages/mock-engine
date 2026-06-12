@@ -234,4 +234,59 @@ class QueryBuilderTest extends TestCase
             ->get();
         $this->assertCount(2, $results);
     }
+
+    public function testInAndBetweenFilters(): void
+    {
+        $results = (new QueryBuilder($this->users))
+            ->whereIn('profile.city', ['Istanbul', 'Izmir'])
+            ->get();
+        // John Doe (Istanbul), Bob Johnson (Izmir), Alice Williams (Istanbul) -> 3
+        $this->assertCount(3, $results);
+
+        $results = (new QueryBuilder($this->users))
+            ->whereNotIn('profile.city', ['Ankara', 'Izmir'])
+            ->get();
+        // John Doe, Alice Williams -> 2
+        $this->assertCount(2, $results);
+
+        $results = (new QueryBuilder($this->users))
+            ->whereBetween('age', [18, 30])
+            ->get();
+        // John Doe (25), Jane Smith (30) -> 2
+        $this->assertCount(2, $results);
+
+        $results = (new QueryBuilder($this->users))
+            ->whereNotBetween('age', [20, 32])
+            ->get();
+        // Bob Johnson (17), Alice Williams (35) -> 2
+        $this->assertCount(2, $results);
+
+        // Test OR variants
+        $results = (new QueryBuilder($this->users))
+            ->where('profile.city', '=', 'Ankara')
+            ->orWhereIn('profile.city', ['Izmir'])
+            ->get();
+        // Jane Smith (Ankara), Bob Johnson (Izmir) -> 2
+        $this->assertCount(2, $results);
+
+        $results = (new QueryBuilder($this->users))
+            ->where('profile.city', '=', 'Ankara')
+            ->orWhereNotIn('profile.city', ['Ankara', 'Izmir', 'Istanbul']) // non-existent
+            ->get();
+        $this->assertCount(1, $results);
+
+        $results = (new QueryBuilder($this->users))
+            ->where('profile.city', '=', 'Ankara')
+            ->orWhereBetween('age', [34, 40])
+            // Jane Smith (Ankara), Alice Williams (35) -> 2
+            ->get();
+        $this->assertCount(2, $results);
+
+        $results = (new QueryBuilder($this->users))
+            ->where('profile.city', '=', 'Ankara')
+            ->orWhereNotBetween('age', [15, 32])
+            // Jane Smith (Ankara), Alice Williams (35) -> 2
+            ->get();
+        $this->assertCount(2, $results);
+    }
 }

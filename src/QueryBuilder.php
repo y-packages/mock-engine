@@ -138,6 +138,114 @@ class QueryBuilder
     }
 
     /**
+     * Add a WHERE IN condition.
+     *
+     * @param array<int, mixed> $values
+     */
+    public function whereIn(string $column, array $values, string $boolean = 'AND'): self
+    {
+        $this->wheres[] = [
+            'type' => 'basic',
+            'column' => $column,
+            'operator' => 'IN',
+            'value' => $values,
+            'boolean' => strtoupper($boolean),
+        ];
+        return $this;
+    }
+
+    /**
+     * Add an OR WHERE IN condition.
+     *
+     * @param array<int, mixed> $values
+     */
+    public function orWhereIn(string $column, array $values): self
+    {
+        return $this->whereIn($column, $values, 'OR');
+    }
+
+    /**
+     * Add a WHERE NOT IN condition.
+     *
+     * @param array<int, mixed> $values
+     */
+    public function whereNotIn(string $column, array $values, string $boolean = 'AND'): self
+    {
+        $this->wheres[] = [
+            'type' => 'basic',
+            'column' => $column,
+            'operator' => 'NOT IN',
+            'value' => $values,
+            'boolean' => strtoupper($boolean),
+        ];
+        return $this;
+    }
+
+    /**
+     * Add an OR WHERE NOT IN condition.
+     *
+     * @param array<int, mixed> $values
+     */
+    public function orWhereNotIn(string $column, array $values): self
+    {
+        return $this->whereNotIn($column, $values, 'OR');
+    }
+
+    /**
+     * Add a WHERE BETWEEN condition.
+     *
+     * @param array{0: mixed, 1: mixed} $values
+     */
+    public function whereBetween(string $column, array $values, string $boolean = 'AND'): self
+    {
+        $this->wheres[] = [
+            'type' => 'basic',
+            'column' => $column,
+            'operator' => 'BETWEEN',
+            'value' => $values,
+            'boolean' => strtoupper($boolean),
+        ];
+        return $this;
+    }
+
+    /**
+     * Add an OR WHERE BETWEEN condition.
+     *
+     * @param array{0: mixed, 1: mixed} $values
+     */
+    public function orWhereBetween(string $column, array $values): self
+    {
+        return $this->whereBetween($column, $values, 'OR');
+    }
+
+    /**
+     * Add a WHERE NOT BETWEEN condition.
+     *
+     * @param array{0: mixed, 1: mixed} $values
+     */
+    public function whereNotBetween(string $column, array $values, string $boolean = 'AND'): self
+    {
+        $this->wheres[] = [
+            'type' => 'basic',
+            'column' => $column,
+            'operator' => 'NOT BETWEEN',
+            'value' => $values,
+            'boolean' => strtoupper($boolean),
+        ];
+        return $this;
+    }
+
+    /**
+     * Add an OR WHERE NOT BETWEEN condition.
+     *
+     * @param array{0: mixed, 1: mixed} $values
+     */
+    public function orWhereNotBetween(string $column, array $values): self
+    {
+        return $this->whereNotBetween($column, $values, 'OR');
+    }
+
+    /**
      * Get the registered where conditions (useful for nested evaluation).
      *
      * @return array<int, array{type: string, column?: string|Closure, operator?: string, value?: mixed, boolean: string, query?: Closure}>
